@@ -194,10 +194,16 @@ Editor = text, readonly -> _Mutable_new {
         this.clearLeftRight
         this._sy = this._y
         line = this._lines[this._y]
-        bx = line.find(' ', from=this._x, backward=true) or 0
-        ex = line.find(' ', from=this._x) or line.size + 1
-        this._x = bx + 1
-        this._sx = ex - 1
+        r = Regex("[a-zA-Z_]+")
+        findloop = at ->
+            b, e = r.find(line, at)
+            if not e: return this._x, this._x
+            if b >= this._x: return this._x, this._x
+            if e >= this._x: return b, e
+            goto(findloop(e + 1))
+        bx, ex = findloop(1)
+        this._x = bx
+        this._sx = ex
     selectline = ->
         this.clearLeftRight
         this._sy = this._y
@@ -320,7 +326,7 @@ Editor = text, readonly -> _Mutable_new {
             if not line: break
             line.size.times: c ->
                 g.moveTo(c * FWIDTH - FWIDTH, r * FHEIGHT - 3)
-                g.fillText(line[c:c])
+                g.fillText(line[c])
     )
 
     onmouse = mx, my, buttons, clicks ->
