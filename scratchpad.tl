@@ -35,7 +35,7 @@ Editor = text, readonly -> _Mutable_new {
     _debug = Array.new
     debug = l -> this._debug.add(l)
 
-    ensureLeftRight = (->
+    ensureLeftRight = ->
         assert this._x > 0
         assert this._y > 0
         if this._left: return
@@ -45,20 +45,29 @@ Editor = text, readonly -> _Mutable_new {
         if this._x > line.size + 1: this._x = line.size + 1
         this._left = line[:this._x - 1]
         this._right = line[this._x:]
-    )
-    clearLeftRight = (->
+
+    clearLeftRight = ->
         assert this._x > 0
         assert this._y > 0
         if not this._left: return
         this._lines[this._offset + this._y] = this._left + this._right
         this._left = this._right = null
-    )
+
+    addLine = line ->
+        if this._lines[-1] == "":
+            this._lines[-1] = line
+            return
+        this._lines.add(line)
+
+    addLines = lines ->
+        if this._lines[-1] == "":
+            this._lines.remove(-1)
+        lines.each: l -> this._lines.add(l)
 
     // QUERING
-    currentline = (->
+    currentline = ->
         if this._left: return this._left + this._right
         this._lines[this._y] or ""
-    )
 
     // EDITING
     // TODO allow input to take "\n" and make lines from that
@@ -176,7 +185,7 @@ Editor = text, readonly -> _Mutable_new {
         {                 }:
             this._lines[by] = bline[:bx - 1] + text + eline[ex + 1:]
             this._y = by
-            this._x = bx + text.size
+            this._x = max(bx + text.size - 1, 1)
 
    selectionText = ->
         this.clearLeftRight
@@ -194,7 +203,7 @@ Editor = text, readonly -> _Mutable_new {
         this.clearLeftRight
         this._sy = this._y
         line = this._lines[this._y]
-        r = Regex("[a-zA-Z_]+")
+        r = Regex("[1-9a-zA-Z_]+")
         findloop = at ->
             b, e = r.find(line, at)
             if not e: return this._x, this._x
@@ -284,18 +293,29 @@ Editor = text, readonly -> _Mutable_new {
         return width * FWIDTH, height * FHEIGHT
     )
 
-    setText = text ->
+    text = ->
         this.clearLeftRight
+        this._lines.join("\n")
+
+    setText = text ->
         this._lines = Array.new(text.split("\n",keepempty=true))
         this._y = 1
         this._x = 1
         this._left = null
 
-    text = ->
-        this.clearLeftRight
-        this._lines.join("\n")
+    clearaftercaret = ->
+        this._sx = null
+        this._sy = null
+        this.ensureLeftRight
+        res = this._right +"\n"+ this._lines[this._y + 1:].join("\n")
+        this._right = ""
+        while this._lines.size > this._y:
+            this._lines.remove(this._y + 1)
+        return res
 
-    clear = -> this.setText("")
+    clear = ->
+        this.setText("")
+
 
     render = (g ->
         g.setFont(FONT, FSIZE)
@@ -403,8 +423,7 @@ snippets.add(Snippet("print \"hello world!\""))
 running = Var.new null
 internal_print = ->
     if not $running: return print("ERROR:", args.join(" "))
-    $running.output.input(args.join(" "))
-    $running.output.newline
+    $running.output.addLines(args.join(" ").split("\n"))
     return
 _env = Env.new(_env.set("print", internal_print))
 
@@ -425,16 +444,16 @@ runsnippet = snippet, n ->
 
     catch: e ->
         $running = null
-        snippet.output.input("error: $(e.toString)") //"
+        snippet.output.addLines("error: $(e.toString)".split("\n")) //"
         snippet.output.error = true
         return
     $running = snippet
     res = eval(snippet.env, code)
     $running = null
-    if res:
+    if res != null:
         r = repr(res)
-        { r == "null"   }: snippet.output.input(res)
-        {               }: snippet.output.input("$r")
+        { r == "null"   }: snippet.output.addLines("$res".split("\n"))
+        {               }: snippet.output.addLine(r)
     snippet.output.error = false
     //print "EVAL:", snippet.output.text
     return snippet.env.get
@@ -451,6 +470,17 @@ w.onkey(event ->
     { ctrl and c == 'R'  }:
         runcode()
         if $focus: snippets[$current].changed = true
+    { ctrl and c == 13   }:
+        lines = snippets[$current].editor.clearaftercaret
+        snippets[$current].changed = true
+        $current += 1
+        snippets.insert($current, Snippet(lines))
+    { ctrl and c == 'J'  }:
+        if $current == snippets.size: return
+        lines = snippets[$current + 1].editor._lines
+        snippets.remove($current + 1)
+        if lines.size == 1 and lines[1] == "": return
+        snippets[$current].editor.addLines(lines)
     { c == 27            }: $focus = false
     { $focus             }: snippets[$current].editor.onkey(event)
     { c == 38            }: $current = max($current - 1, 1)
