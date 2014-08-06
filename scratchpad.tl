@@ -207,7 +207,7 @@ Editor = text, readonly -> _Mutable_new {
         findloop = at ->
             b, e = r.find(line, at)
             if not e: return this._x, this._x
-            if b >= this._x: return this._x, this._x
+            if b > this._x: return this._x, this._x
             if e >= this._x: return b, e
             goto(findloop(e + 1))
         bx, ex = findloop(1)
