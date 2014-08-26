@@ -22,7 +22,6 @@ Editor = text, readonly -> _Mutable_new {
     y = 0
 
     _lines = Array.new((text or "").split("\n",keepempty=true))
-    _paste = ""
     _offset = 0
     _x = 1
     _y = 1
@@ -235,7 +234,7 @@ Editor = text, readonly -> _Mutable_new {
        w.clipboardSet(this.selectionText)
 
     paste = ->
-        if this._sx: this.replaceselection(this._paste); return
+        if this._sx: this.replaceselection(w.clipboardGet()); return
         this.input(w.clipboardGet())
 
     // TODO implement undo of sorts ...
