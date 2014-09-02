@@ -14,8 +14,8 @@ Snippet = content -> _Mutable_new {
     changed = true
     code = null
     env = Var.new
-    editor = Editor(content, w)
-    output = Editor(host=w, readonly=true)
+    editor = Editor(content)
+    output = Editor("", readonly=true)
     x = 0, y = 0
     width = 0, height = 0
 }

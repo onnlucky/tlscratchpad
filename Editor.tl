@@ -1,15 +1,22 @@
-
 FONT = { system.platform == "macosx" }: "menlo"
        {                             }: "courier new"
 FHEIGHT = 17
 FWIDTH = 8
 FSIZE = 14
 
-Editor = text, host, readonly -> _Mutable_new {
-    error = false
-    cursor = not readonly
+Editor = text, readonly -> _Mutable_new {
+    // to be a "widget"
+    class = widget.widget_class
+    parent = null
     x = 0
     y = 0
+    width = 0
+    height = 0
+
+    // editor
+    error = false
+    readonly = readonly or false
+    cursor = not readonly
 
     _lines = Array.new((text or "").split("\n",keepempty=true))
     _offset = 0
@@ -216,16 +223,16 @@ Editor = text, host, readonly -> _Mutable_new {
 
    cut = ->
        if not this._sx: return
-       host.clipboardSet(this.selectionText)
+       this.app.clipboardSet(this.selectionText)
        this.replaceselection("")
 
     copy = ->
        if not this._sx: return
-       host.clipboardSet(this.selectionText)
+       this.app.clipboardSet(this.selectionText)
 
     paste = ->
-        if this._sx: this.replaceselection(host.clipboardGet()); return
-        this.input(host.clipboardGet())
+        if this._sx: this.replaceselection(this.app.clipboardGet()); return
+        this.input(this.app.clipboardGet())
 
     // TODO implement undo of sorts ...
     undo = -> null
@@ -270,17 +277,17 @@ Editor = text, host, readonly -> _Mutable_new {
         this._y = min(this._y + 20, this._lines.size)
 
     // QUERYING
-    size = (->
+    size = g ->
         this.clearLeftRight
         width = this._lines.map(l, n ->
             { n == this._y and this._left }: this._left.size + this._right.size
             {                             }: l.size
-        ).max
+        ).max + 1
         height = this._lines.size
         height = { readonly and height > 1 and this._lines[-1] == "" }: height - 1
                  {                                                   }: height
-        return width * FWIDTH, height * FHEIGHT
-    )
+        this.width = width * FWIDTH
+        this.height = height * FHEIGHT
 
     text = ->
         this.clearLeftRight
@@ -306,10 +313,10 @@ Editor = text, host, readonly -> _Mutable_new {
         this.setText("")
 
 
-    render = (g ->
+    draw = g, width, height ->
         g.setFont(FONT, FSIZE)
 
-        if this.cursor and this._sx:
+        if this._sx:
             g.color(0.7,0.83,1)
             bx, by, ex, ey = this.selection
             { by == ey }:
@@ -330,17 +337,20 @@ Editor = text, host, readonly -> _Mutable_new {
         g.color(0,0,0)
         if readonly: g.color(0.4,0.4,0.4)
         this._lines.size.times: r ->
+            y = r * FHEIGHT - 3
+            if y > height: return
             line = { this._y == r and this._left }: this._left + this._right
                    {                             }: this._lines[r]
             if not line: break
             line.size.times: c ->
-                g.moveTo(c * FWIDTH - FWIDTH, r * FHEIGHT - 3)
+                x = c * FWIDTH - FWIDTH
+                if x > width: return
+                g.moveTo(x, y)
                 g.fillText(line[c])
-    )
 
-    onmouse = mx, my, buttons, clicks ->
-        if buttons == 0: return host.onmousemove(null)
-        //print "onmouse:", mx, my, buttons, clicks
+    onmouse = event, mx, my ->
+        if event.buttons == 0: return this.app.onmousemove(null)
+        this.setFocus()
         this._sx = null
         this._sy = null
         x = max(mx /. FWIDTH + 1, 1)
@@ -352,11 +362,11 @@ Editor = text, host, readonly -> _Mutable_new {
         this._y = y
         this._x = min(x, this._lines[y].size + 1)
 
-        if clicks == 2: this.selectword
-        if clicks == 3: this.selectline
+        if event.clicks == 2: this.selectword
+        if event.clicks == 3: this.selectline
+        this.parent.dirty
 
-        host.onmousemove(mx, my, buttons ->
-            //print "onmousemove:", mx, my, buttons
+        this.app.onmousemove(mx, my, buttons ->
             x = max((mx - this.x) /. FWIDTH + 1, 1)
             y = max((my - this.y) /. FHEIGHT + 1, 1)
             if y > this._lines.size:
@@ -365,13 +375,20 @@ Editor = text, host, readonly -> _Mutable_new {
                 return
             this._sy = y
             this._sx = min(x, this._lines[y].size + 1)
-            b.redraw
+            this.parent.dirty
         )
 
     onkey = event ->
         c = event.key
         shift = event.modifiers & 1 == 1
         ctrl = event.modifiers & 2 == 2
+
+        if this.readonly:
+            { ctrl and c == 'X' }: this.copy
+            { ctrl and c == 'C' }: this.copy
+            {                   }: null
+            return
+
         { ctrl and c == 'A' }: this.selectall
         { ctrl and c == 'X' }: this.cut
         { ctrl and c == 'C' }: this.copy
@@ -391,5 +408,6 @@ Editor = text, host, readonly -> _Mutable_new {
         { c ==  34 }: this.movepagedown(shift)
         { event.input.size == 1 }: this.input(event.input)
         {          }: print "unknown key", repr(event)
+        this.parent.dirty
 }
 

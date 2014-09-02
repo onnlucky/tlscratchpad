@@ -1,5 +1,6 @@
 run:
-	gtl scratchpad.tl
+	gtl run.tl
+	#gtl scratchpad.tl
 
 tlScratchpad.app/Contents/MacOS/tlScratchpad: scratchpad.tl Makefile
 	mkdir -p tlScratchpad.app/Contents/MacOS/
