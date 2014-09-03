@@ -17,6 +17,7 @@ Editor = text, readonly -> _Mutable_new {
     error = false
     readonly = readonly or false
     cursor = not readonly
+    result = null
 
     _lines = Array.new((text or "").split("\n",keepempty=true))
     _offset = 0
@@ -316,6 +317,10 @@ Editor = text, readonly -> _Mutable_new {
     draw = g, width, height ->
         g.setFont(FONT, FSIZE)
 
+        if this.result:
+            g.color(0.8,1,0.8)
+            g.rectangle(0, 0, width, height)
+            g.fill
         if this._sx:
             g.color(0.7,0.83,1)
             bx, by, ex, ey = this.selection
@@ -389,25 +394,29 @@ Editor = text, readonly -> _Mutable_new {
             {                   }: null
             return
 
-        { ctrl and c == 'A' }: this.selectall
-        { ctrl and c == 'X' }: this.cut
+        change = Var.new true
+        { ctrl and c == 'A' }: this.selectall; $change = false
         { ctrl and c == 'C' }: this.copy
+        { ctrl and c == 'X' }: this.cut
         { ctrl and c == 'V' }: this.paste
         { ctrl and c == 'Z' }: this.undo
         { c ==  13 }: this.newline
         { c ==   8 }: this.deleteleft
         { c ==   9 }: this.input("  ")
         { c == 127 }: this.deleteright
-        { c ==  37 }: this.moveleft(shift)
-        { c ==  39 }: this.moveright(shift)
-        { c ==  38 }: this.moveup(shift)
-        { c ==  40 }: this.movedown(shift)
-        { c ==  36 }: this.movelinestart(shift)
-        { c ==  35 }: this.movelineend(shift)
-        { c ==  33 }: this.movepageup(shift)
-        { c ==  34 }: this.movepagedown(shift)
+        { c ==  37 }: this.moveleft(shift); $change = false
+        { c ==  39 }: this.moveright(shift); $change = false
+        { c ==  38 }: this.moveup(shift); $change = false
+        { c ==  40 }: this.movedown(shift); $change = false
+        { c ==  36 }: this.movelinestart(shift); $change = false
+        { c ==  35 }: this.movelineend(shift); $change = false
+        { c ==  33 }: this.movepageup(shift); $change = false
+        { c ==  34 }: this.movepagedown(shift); $change = false
         { event.input.size == 1 }: this.input(event.input)
-        {          }: print "unknown key", repr(event)
+        {          }: print "unknown key", repr(event); $change = false
         this.parent.dirty
+        if $change and this.onchange: this.onchange()
+
+    onchange = null
 }
 
