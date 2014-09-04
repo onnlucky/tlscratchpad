@@ -38,8 +38,8 @@ example = {
     ]
     template = "uppercase = s -> s"
     tests = [
-        {test="hello",ref="HELLO",fn="uppercase"}
-        {test="world!",ref="WORLD!",fn="uppercase"}
+        {arg="hello",ref="HELLO"}
+        {arg="world!",ref="WORLD!"}
     ]
 }
 
@@ -57,7 +57,7 @@ view.add(widget.Space(10))
 
 tests = Array.new
 assignment.tests.each(t ->
-    result = Result(t.fn, t.test, t.ref)
+    result = Result(t.arg, t.ref)
     view.add(result)
     tests.add(result)
 )

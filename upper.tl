@@ -7,8 +7,9 @@
     ]
     template = "uppercase = s -> s"
     tests = [
-        {test="hello",ref="HELLO",fn="uppercase"}
-        {test="world!",ref="WORLD!",fn="uppercase"}
+        {arg="hello",ref="HELLO"}
+        {arg="world!",ref="WORLD!"}
+        {arg="1234567890",ref="1234567890"}
     ]
 }
 

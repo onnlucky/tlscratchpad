@@ -20,7 +20,7 @@ Hints = hints -> _Mutable_new {
        this.text.draw(g, width, height)
 
    onmouse = x, y, event ->
-       this.hint = (this.hint + 1) % (hints.size + 1)
+       this.hint = 1 + this.hint % hints.size
        { this.hint == 0 }: this.text.setText("Show hint.")
        {                }: this.text.setText(hints[this.hint])
 }
