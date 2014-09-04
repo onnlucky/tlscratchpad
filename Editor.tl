@@ -14,7 +14,8 @@ Editor = text, readonly -> _Mutable_new {
     height = 0
 
     // editor
-    error = false
+    error = null
+    errormsg = null
     readonly = readonly or false
     cursor = not readonly
 
@@ -277,7 +278,7 @@ Editor = text, readonly -> _Mutable_new {
         this._y = min(this._y + 20, this._lines.size)
 
     // QUERYING
-    size = g ->
+    size = g, bwidth, bheight ->
         this.clearLeftRight
         width = this._lines.map(l, n ->
             { n == this._y and this._left }: this._left.size + this._right.size
@@ -286,7 +287,7 @@ Editor = text, readonly -> _Mutable_new {
         height = this._lines.size
         height = { readonly and height > 1 and this._lines[-1] == "" }: height - 1
                  {                                                   }: height
-        this.width = width * FWIDTH
+        this.width = max(width * FWIDTH, bwidth)
         this.height = height * FHEIGHT
 
     text = ->
@@ -316,13 +317,16 @@ Editor = text, readonly -> _Mutable_new {
     draw = g, width, height ->
         g.setFont(FONT, FSIZE)
 
+        g.color(1,1,1).rectangle(0, 0, width, height).fill
+        if this.error:
+            g.color(1,0.9,0.9).rectangle(0, this.error * FHEIGHT - FHEIGHT, width, FHEIGHT).fill
         if this._sx:
             g.color(0.7,0.83,1)
             bx, by, ex, ey = this.selection
             { by == ey }:
                 g.rectangle(bx * FWIDTH - FWIDTH, by * FHEIGHT - FHEIGHT, (ex - bx + 1) * FWIDTH, FHEIGHT)
             {          }:
-                g.rectangle(bx * FWIDTH - FWIDTH, by * FHEIGHT - FHEIGHT, 1000, FHEIGHT)
+                g.rectangle(bx * FWIDTH - FWIDTH, by * FHEIGHT - FHEIGHT, width, FHEIGHT)
                 g.rectangle(0, by * FHEIGHT, 1000, (ey - by - 1) * FHEIGHT)
                 g.rectangle(0, ey * FHEIGHT - FHEIGHT, ex * FWIDTH, FHEIGHT)
             g.fill
@@ -332,7 +336,8 @@ Editor = text, readonly -> _Mutable_new {
                 { this._lines[this._y] }: min(this._lines[this._y].size + 1, this._x)
                 {                      }: this._x
             g.rectangle(x * FWIDTH - FWIDTH, this._y * FHEIGHT - FHEIGHT, FWIDTH, FHEIGHT)
-            g.fill
+            { this.focus }: g.fill
+            {            }: g.stroke
 
         g.color(0,0,0)
         if readonly: g.color(0.4,0.4,0.4)
@@ -395,6 +400,8 @@ Editor = text, readonly -> _Mutable_new {
         { ctrl and c == 'X' }: this.cut
         { ctrl and c == 'V' }: this.paste
         { ctrl and c == 'Z' }: this.undo
+        { ctrl and c == 37  }: this.movelinestart(shift); $change = false
+        { ctrl and c == 39  }: this.movelineend(shift); $change = false
         { c ==  13 }: this.newline
         { c ==   8 }: this.deleteleft
         { c ==   9 }: this.input("  ")
@@ -413,5 +420,9 @@ Editor = text, readonly -> _Mutable_new {
         if $change and this.onchange: this.onchange()
 
     onchange = null
+
+    setErrorLine = line, msg ->
+        this.error = line
+        this.errormsg = msg
 }
 

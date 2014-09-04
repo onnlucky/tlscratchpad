@@ -4,7 +4,7 @@ FHEIGHT = 17
 FWIDTH = 8
 FSIZE = 14
 
-Result = function, in, compare, to -> _Mutable_new {
+Result = function, eval, ref -> _Mutable_new {
     // to be a "widget"
     class = widget.widget_class
     parent = null
@@ -30,8 +30,9 @@ Result = function, in, compare, to -> _Mutable_new {
         g.fill
 
 
-        line = "$function($(repr in)) $compare $(repr to)"
+        line = "$function($(repr eval)) == $(repr ref)"
         line = { this.status }: line
+               { this.error and this.error.size == 0 }: line
                { this.error  }: "$line (error: $(this.error))"
                {             }: "$line (result: $(repr this.output))"
 
@@ -44,20 +45,18 @@ Result = function, in, compare, to -> _Mutable_new {
             g.fillText(line[c])
 
     setError = e ->
-        print "ERROR: $e"
         this.status = false
         this.output = null
         this.error = e
         this.parent.dirty
 
     eval = fn ->
-        self = this
         this.error = "unknown"
         this.output = null
         this.status = false
-        catch: e -> self.setError(try(e.msg, e) or "unknown")
-        this.output = fn(in)
+        catch: e -> this.setError(try(e.msg, e) or "unknown")
+        this.output = fn(eval)
         this.error = null
-        this.status = this.output == to
+        this.status = this.output == ref
         this.parent.dirty
 }

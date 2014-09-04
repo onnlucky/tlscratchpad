@@ -1,5 +1,7 @@
-w = Window.new 400, 800
-w.title "widget test"
+#!/usr/bin/env gtl
+
+w = Window.new 600, 400
+w.title "Code Exercises"
 b = Box.new 0, 0, w.width, w.height
 w.add(b)
 w.onresize(width, height -> b.width(width); b.height(height))
@@ -27,33 +29,64 @@ b.ondraw(g ->
     view.draw(g, b.width, b.height)
 )
 
-view.add(widget.Text("Create a function that takes a string, and returns the same string, but all in upper case."))
-view.add(widget.Text(""))
-view.add(Editor("uppercase = s ->", readonly=true))
-editor = Editor("  s.upper")
+example = {
+    title = "Example"
+    text = "Create a function that receives a string, and returns the same string, but in all upper case letters."
+    hints = [
+        "Strings have a method called 'upper'."
+        "Read the function out loud: 'uppercase' is (=) a function (->) that takes an 's' and ..."
+    ]
+    template = "uppercase = s -> s"
+    tests = [
+        {test="hello",ref="HELLO",fn="uppercase"}
+        {test="world!",ref="WORLD!",fn="uppercase"}
+    ]
+}
+
+assignment = { args[1] }: io.File(args[1]).readString.eval
+             {         }: example
+
+view.add(widget.Space(10))
+view.add(widget.Text(assignment.title,style="bold"))
+view.add(widget.Text(assignment.text))
+view.add(widget.Space(10))
+editor = Editor(assignment.template)
 view.add(editor)
 editor.setFocus
-view.add(widget.Text(""))
+view.add(widget.Space(10))
 
-result = Result("uppercase", "hello", "==", "HELLO")
-view.add(result)
+tests = Array.new
+assignment.tests.each(t ->
+    result = Result(t.fn, t.test, t.ref)
+    view.add(result)
+    tests.add(result)
+)
+
+if try(assignment.hints):
+    view.add(widget.Space(20))
+    view.add(Hints(assignment.hints))
+
+reline = Regex("line.([0-9]+)")
+runchange = ->
+    catch: e ->
+        msg = try(e.msg, e) or "unknown"
+        line = try(Number(reline.match(msg)[1]))
+        print "line:", line
+        editor.setErrorLine(line, msg)
+        tests.each(r -> r.setError(""))
+    code = editor.text
+    fn = code.eval
+    editor.setErrorLine(null)
+    tests.each(r -> r.eval(fn))
+runchange()
 
 dochange = Var.new 0
 editor.onchange = ->
     $dochange += 1
     !(
-        catch: e -> print try(e.toString, e)
         sleep 0.3
         x = ($dochange -= 1)
         if x > 0: return
+        runchange()
+     )
 
-        code = "uppercase = s ->\n" + editor.text
-        print "compiling:\n", repr(code)
-
-        catch: e -> result.setError(try(e.msg, e) or "unknown")
-        fn, err = code.eval
-        print "fn:", fn, err
-        result.eval(fn)
-    )
-
-editor.onchange
