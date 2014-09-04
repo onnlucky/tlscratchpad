@@ -27,30 +27,33 @@ b.ondraw(g ->
     view.draw(g, b.width, b.height)
 )
 
-view.add(widget.Text("Create a function that takes a string, and returns the upper case."))
+view.add(widget.Text("Create a function that takes a string, and returns the same string, but all in upper case."))
+view.add(widget.Text(""))
 view.add(Editor("uppercase = s ->", readonly=true))
 editor = Editor("  s.upper")
 view.add(editor)
 editor.setFocus
 view.add(widget.Text(""))
-result = Editor("uppercase(\"hello\") == \"HELLO\"", readonly=true)
+
+result = Result("uppercase", "hello", "==", "HELLO")
 view.add(result)
 
 dochange = Var.new 0
 editor.onchange = ->
-    result.result = null
     $dochange += 1
     !(
+        catch: e -> print try(e.toString, e)
         sleep 0.3
         x = ($dochange -= 1)
         if x > 0: return
-        catch: e ->
-            print e.toString
-            result.result = false
-        res = ("(s ->\n"+ editor.text +")(\"hello\")").eval == "HELLO"
-        print "running:", res
-        result.result = res
-        result.parent.dirty
+
+        code = "uppercase = s ->\n" + editor.text
+        print "compiling:\n", repr(code)
+
+        catch: e -> result.setError(try(e.msg, e) or "unknown")
+        fn, err = code.eval
+        print "fn:", fn, err
+        result.eval(fn)
     )
 
 editor.onchange

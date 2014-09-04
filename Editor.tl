@@ -17,7 +17,6 @@ Editor = text, readonly -> _Mutable_new {
     error = false
     readonly = readonly or false
     cursor = not readonly
-    result = null
 
     _lines = Array.new((text or "").split("\n",keepempty=true))
     _offset = 0
@@ -317,10 +316,6 @@ Editor = text, readonly -> _Mutable_new {
     draw = g, width, height ->
         g.setFont(FONT, FSIZE)
 
-        if this.result:
-            g.color(0.8,1,0.8)
-            g.rectangle(0, 0, width, height)
-            g.fill
         if this._sx:
             g.color(0.7,0.83,1)
             bx, by, ex, ey = this.selection
