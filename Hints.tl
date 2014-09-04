@@ -2,6 +2,7 @@ Hints = hints -> _Mutable_new {
     // to be a "widget"
     class = widget.widget_class
     parent = null
+    visible = true
     x = 0
     y = 0
     width = 0

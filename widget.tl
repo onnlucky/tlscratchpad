@@ -37,6 +37,7 @@ widget_class = {
     app = -> this.parent.app
     focus = -> try(this.app._focus) == this
     setFocus = -> this.app.setFocus(this)
+    setVisible = visible -> this.visible = visible; try(this.parent.dirty)
     size = g, width -> null
     draw = g, width, height -> null
     onkey = event -> null
@@ -45,6 +46,7 @@ widget_class = {
 
 widget_fields = {
     parent = null
+    visible = true
     x = 0
     y = 0
     width = 0
@@ -112,6 +114,7 @@ Text = text, align, font, size, style, color, background -> _Mutable_new(Object.
 
 Vertical = -> _Mutable_new {
     parent = null
+    visible = true
     children = Array.new
     _dirty = true
     x = 0
@@ -134,6 +137,7 @@ Vertical = -> _Mutable_new {
         xmin = this.xscroll
         xmax = this.xscroll + this.parent.width
         this.children.each: c ->
+            if not c.visible: continue
             if c.y + c.height < ymin and c.y > ymax: continue
             if c.x + c.width < xmin and c.x > xmax: continue
             g.save
@@ -152,6 +156,7 @@ Vertical = -> _Mutable_new {
         this.width = 0
         this.height = 0
         this.children.each: c ->
+            if not c.visible: continue
             c.size(g, width)
             c.x = 0
             c.y = this.height

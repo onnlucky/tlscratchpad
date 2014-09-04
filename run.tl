@@ -62,9 +62,13 @@ assignment.tests.each(t ->
     tests.add(result)
 )
 
-if try(assignment.hints):
-    view.add(widget.Space(20))
-    view.add(Hints(assignment.hints))
+view.add(widget.Space(20))
+
+green = widget.Text("Well Done!", align="center", style="bold", color=[0,0.7,0])
+view.add(green)
+
+hints = Hints(try(assignment.hints,[]))
+if try(assignment.hints): view.add(hints)
 
 reline = Regex("line.([0-9]+)")
 runchange = ->
@@ -77,7 +81,10 @@ runchange = ->
     code = editor.text
     fn = code.eval
     editor.setErrorLine(null)
-    tests.each(r -> r.eval(fn))
+    tests.each(test -> test.eval(fn))
+    ok = tests.reduce(initial=true, (r, test -> r = r and test.status))
+    green.setVisible(ok)
+    hints.setVisible(not ok)
 runchange()
 
 dochange = Var.new 0
