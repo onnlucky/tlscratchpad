@@ -31,7 +31,7 @@ Result = arg, ref -> _Mutable_new {
         g.rectangle(0, 0, width, height)
         g.fill
 
-        line = "$(this.function)($(repr arg)) == $(repr ref)"
+        line = "$(this.function)($(repr(arg)[2:-2])) == $(repr(ref)[2:-2])"
         line = { this.status }: line
                { this.error and this.error.size == 0 }: line
                { this.error  }: "$line (error: $(this.error))"
@@ -57,8 +57,8 @@ Result = arg, ref -> _Mutable_new {
         this.status = false
         this.function = fn.name
         catch: e -> this.setError(try(e.msg, e) or "unknown")
-        this.output = fn(arg)
+        this.output = fn.call(arg)
         this.error = null
-        this.status = this.output == ref
+        this.status = this.output == ref[1]
         this.parent.dirty
 }

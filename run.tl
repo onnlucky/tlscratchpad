@@ -57,7 +57,7 @@ view.add(widget.Space(10))
 
 tests = Array.new
 assignment.tests.each(t ->
-    result = Result(t.arg, t.ref)
+    result = Result(try(t.args, [t.arg]), try(t.refs,[t.ref]))
     view.add(result)
     tests.add(result)
 )
