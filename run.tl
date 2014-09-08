@@ -54,6 +54,8 @@ editor = Editor(assignment.template)
 view.add(editor)
 editor.setFocus
 view.add(widget.Space(10))
+view.add(widget.Text("Make these tests green by implementing your function:"))
+view.add(widget.Space(5))
 
 tests = Array.new
 assignment.tests.each(t ->
@@ -70,16 +72,19 @@ view.add(green)
 hints = Hints(try(assignment.hints,[]))
 if try(assignment.hints): view.add(hints)
 
-reline = Regex("line.([0-9]+)")
+reline = Regex("(line|at:) ([0-9]+)")
 runchange = ->
     catch: e ->
         msg = try(e.msg, e) or "unknown"
-        line = try(Number(reline.match(msg)[1]))
-        print "line:", line
+        line = try(Number(reline.match(msg)[2]))
+        print "line:", line, msg
         editor.setErrorLine(line, msg)
         tests.each(r -> r.setError(""))
     code = editor.text
-    fn = code.eval
+    //fn = code.eval
+    bytes = compiler.compile(code)
+    mod = compiler.load(bytes, out)
+    fn = mod.run
     editor.setErrorLine(null)
     tests.each(test -> test.eval(fn))
     ok = tests.reduce(initial=true, (r, test -> r = r and test.status))
