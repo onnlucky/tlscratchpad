@@ -57,7 +57,7 @@ Result = arg, ref -> _Mutable_new {
         this.status = false
         this.function = fn.name
         catch: e -> this.setError(try(e.msg, e) or "unknown")
-        this.output = fn.call(arg)
+        this.output = Task.new(100).run(-> fn.call(arg)).value
         this.error = null
         this.status = this.output == ref[1]
         this.parent.dirty

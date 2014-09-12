@@ -90,7 +90,6 @@ runchange = ->
     ok = tests.reduce(initial=true, (r, test -> r = r and test.status))
     green.setVisible(ok)
     hints.setVisible(not ok)
-runchange()
 
 dochange = Var.new 0
 editor.onchange = ->
@@ -101,4 +100,7 @@ editor.onchange = ->
         if x > 0: return
         runchange()
      )
+
+sleep 0.1
+runchange()
 
