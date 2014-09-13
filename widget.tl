@@ -37,7 +37,7 @@ widget_class = {
     app = -> this.parent.app
     focus = -> try(this.app._focus) == this
     setFocus = -> this.app.setFocus(this)
-    setVisible = visible -> this.visible = visible; try(this.parent.dirty)
+    setVisible = visible -> this.visible = visible; !try(this.parent.dirty)
     size = g, width -> null
     draw = g, width, height -> null
     onkey = event -> null

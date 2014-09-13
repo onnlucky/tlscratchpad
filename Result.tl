@@ -49,7 +49,7 @@ Result = arg, ref -> _Mutable_new {
         this.status = false
         this.output = null
         this.error = e
-        this.parent.dirty
+        !this.parent.dirty
 
     eval = fn ->
         this.error = "unknown"
@@ -60,5 +60,5 @@ Result = arg, ref -> _Mutable_new {
         this.output = Task.new(100).run(-> fn.call(arg)).value
         this.error = null
         this.status = this.output == ref[1]
-        this.parent.dirty
+        !this.parent.dirty
 }

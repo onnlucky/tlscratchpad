@@ -81,10 +81,10 @@ runchange = ->
         editor.setErrorLine(line, msg)
         tests.each(r -> r.setError(""))
     code = editor.text
-    //fn = code.eval
     bytes = compiler.compile(code)
     mod = compiler.load(bytes, out)
     fn = mod.run
+    fn = code.eval
     editor.setErrorLine(null)
     tests.each(test -> test.eval(fn))
     ok = tests.reduce(initial=true, (r, test -> r = r and test.status))
@@ -101,6 +101,5 @@ editor.onchange = ->
         runchange()
      )
 
-sleep 0.1
 runchange()
 
