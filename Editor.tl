@@ -21,6 +21,8 @@ Editor = text, readonly -> _Mutable_new {
     cursor = not readonly
 
     _lines = Array.new((text or "").split("\n",keepempty=true))
+    _markup = Array.new()
+
     _offset = 0
     _x = 1
     _y = 1
@@ -322,7 +324,8 @@ Editor = text, readonly -> _Mutable_new {
         if this.error:
             g.color(1,0.9,0.9).rectangle(0, this.error * FHEIGHT - FHEIGHT, width, FHEIGHT).fill
         if this._sx:
-            g.color(0.7,0.83,1)
+            { this.focus }: g.color(0.7,0.83,1)
+            {            }: g.color(0.7,0.7,0.7)
             bx, by, ex, ey = this.selection
             { by == ey }:
                 g.rectangle(bx * FWIDTH - FWIDTH, by * FHEIGHT - FHEIGHT, (ex - bx + 1) * FWIDTH, FHEIGHT)
@@ -340,19 +343,20 @@ Editor = text, readonly -> _Mutable_new {
             { this.focus }: g.fill
             {            }: g.stroke
 
-        g.color(0,0,0)
-        if readonly: g.color(0.4,0.4,0.4)
         this._lines.size.times: r ->
             y = r * FHEIGHT - 3
             if y > height: return
             line = { this._y == r and this._left }: this._left + this._right
                    {                             }: this._lines[r]
             if not line: break
+
+            g.color
+            markup = this._markup[r] or []
             line.size.times: c ->
                 x = c * FWIDTH - FWIDTH
                 if x > width: return
-                g.moveTo(x, y)
-                g.fillText(line[c])
+                if markup[c]: g.color(markup[c])
+                g.moveTo(x, y).fillText(line[c])
 
     onmouse = event, mx, my ->
         if event.buttons == 0: return this.app.onmousemove(null)

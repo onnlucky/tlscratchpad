@@ -1,6 +1,6 @@
 #!/usr/bin/env gtl
 
-w = Window.new 600, 400
+w = Window.new 800, 400
 w.title "Code Exercises"
 b = Box.new 0, 0, w.width, w.height
 w.add(b)
@@ -54,6 +54,8 @@ editor = Editor(assignment.template)
 view.add(editor)
 editor.setFocus
 view.add(widget.Space(10))
+view.add(Canvas())
+view.add(widget.Space(10))
 view.add(widget.Text("Make these tests green by implementing your function:"))
 view.add(widget.Space(5))
 
@@ -99,7 +101,7 @@ editor.onchange = ->
         x = ($dochange -= 1)
         if x > 0: return
         runchange()
-     )
+    )
 
 runchange()
 
