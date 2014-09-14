@@ -56,7 +56,7 @@ Canvas = arg, ref -> _Mutable_new {
     width = 0
     height = 0
 
-    drawing = group(circle(50), move(-100, 1, circle(50)))
+    drawing = group(rect(100, 100), move(-10, -100, circle(50)))
 
     size = g, width, height ->
         this.width = width
@@ -68,10 +68,11 @@ Canvas = arg, ref -> _Mutable_new {
         sy = (this.height - 4) / (h - y)
         scale = { sx <= sy }: sx
                 {          }: sy
-        print "scale:", scale, "WxH", this.width, this.height, "bounds", x, y, w, h
+        //print "scale:", scale, "WxH", this.width, this.height, "bounds", x, y, w, h, "mid", (x - w)/2, (y - h)/2
         g.translate(this.width / 2, this.height / 2)
         g.scale(scale, scale)
-        //g.translate((x - w)/-2, (y - h)/-2)
+        g.translate(-1*(x - (x - w)/2), -1*(y - (y - h)/2))
+        g.color
         this.drawing.draw(g)
 }
 
