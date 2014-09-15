@@ -54,7 +54,8 @@ editor = Editor(assignment.template)
 view.add(editor)
 editor.setFocus
 view.add(widget.Space(10))
-view.add(Canvas())
+canvas = Canvas()
+view.add(canvas)
 view.add(widget.Space(10))
 view.add(widget.Text("Make these tests green by implementing your function:"))
 view.add(widget.Space(5))
@@ -83,15 +84,18 @@ runchange = ->
         editor.setErrorLine(line, msg)
         tests.each(r -> r.setError(""))
     code = editor.text
-    bytes = compiler.compile(code)
-    mod = compiler.load(bytes, out)
-    fn = mod.run
-    fn = code.eval
-    editor.setErrorLine(null)
-    tests.each(test -> test.eval(fn))
-    ok = tests.reduce(initial=true, (r, test -> r = r and test.status))
-    green.setVisible(ok)
-    hints.setVisible(not ok)
+    //bytes = compiler.compile(code)
+    //mod = compiler.load(bytes, out)
+    //fn = mod.run
+    fn = code.eval(Canvas.env)
+    { try(Object.has(fn.class, "bounds")) }:
+        canvas.setDrawing(fn)
+    {                                     }:
+        editor.setErrorLine(null)
+        tests.each(test -> test.eval(fn))
+        ok = tests.reduce(initial=true, (r, test -> r = r and test.status))
+        green.setVisible(ok)
+        hints.setVisible(not ok)
 
 dochange = Var.new 0
 editor.onchange = ->

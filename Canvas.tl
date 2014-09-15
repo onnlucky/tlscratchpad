@@ -3,20 +3,20 @@ Circle = {
     draw = g ->
         g.arc(0, 0, this.r).stroke
 }
-circle = r, fill, stroke -> { class = Circle, { r, fill, stroke }}
+circle = r, fill, stroke -> r = r or 1; { class = Circle, { r, fill, stroke }}
 
 Rect = {
     bounds = -> return this.width/-2, this.height/-2, this.width/2, this.height/2
     draw = g ->
         g.rectangle(this.width/-2, this.height/-2, this.width, this.height).stroke
 }
-rect = width, height, fill, stroke -> { class = Rect, { width, height, fill, stroke }}
+rect = width, height, fill, stroke -> width = width or 1; height = height or width; { class = Rect, { width, height, fill, stroke }}
 
 Line = {
     bounds = -> return 0, 0, this.x, this.y
     draw = g -> g.moveTo(0, 0).lineTo(this.x, this.y).stroke
 }
-line = x, y, stroke -> { class = Line, { x, y, stroke }}
+line = x, y, stroke -> x = x or 0; y = y or 0; { class = Line, { x, y, stroke }}
 
 Move = {
     bounds = ->
@@ -28,7 +28,7 @@ Move = {
         this.sub.draw(g)
         g.restore
 }
-move = x, y, sub -> { class = Move, { x, y, sub }}
+move = x, y, sub -> x = x or 0; y = y or 0; { class = Move, { x, y, sub }}
 
 Group = {
     bounds = ->
@@ -45,6 +45,8 @@ Group = {
 }
 group = -> { class = Group, sub = args.slice }
 
+_env = Env.current
+
 
 Canvas = arg, ref -> _Mutable_new {
     // to be a "widget"
@@ -57,6 +59,10 @@ Canvas = arg, ref -> _Mutable_new {
     height = 0
 
     drawing = group(rect(100, 100), move(-10, -100, circle(50)))
+
+    setDrawing = d ->
+        this.drawing = d
+        this.parent.dirty
 
     size = g, width, height ->
         this.width = width
@@ -74,5 +80,10 @@ Canvas = arg, ref -> _Mutable_new {
         g.translate(-1*(x - (x - w)/2), -1*(y - (y - h)/2))
         g.color
         this.drawing.draw(g)
+}
+
+{
+    call = Canvas
+    env = _env
 }
 
