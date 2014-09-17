@@ -1,9 +1,10 @@
 run:
-	gtl run.tl
-	#gtl scratchpad.tl
+	gtl scratchpad.tl
+	#gtl run.tl
 
 tlScratchpad.app/Contents/MacOS/tlScratchpad: scratchpad.tl Makefile
 	mkdir -p tlScratchpad.app/Contents/MacOS/
+	cp -r *.tl tlScratchpad.app/Contents/MacOS/
 	echo "#!`which gtl`" > tlScratchpad.app/Contents/MacOS/tlScratchpad
 	cat scratchpad.tl >> tlScratchpad.app/Contents/MacOS/tlScratchpad
 	chmod 755 tlScratchpad.app/Contents/MacOS/tlScratchpad

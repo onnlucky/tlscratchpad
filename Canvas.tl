@@ -74,6 +74,8 @@ Canvas = arg, ref -> _Mutable_new {
         sy = (this.height - 4) / (h - y)
         scale = { sx <= sy }: sx
                 {          }: sy
+        scale = { scale > 1 }: 1
+                {           }: scale
         //print "scale:", scale, "WxH", this.width, this.height, "bounds", x, y, w, h, "mid", (x - w)/2, (y - h)/2
         g.translate(this.width / 2, this.height / 2)
         g.scale(scale, scale)

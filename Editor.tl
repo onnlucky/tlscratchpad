@@ -293,6 +293,11 @@ Editor = text, readonly -> _Mutable_new {
         this.width = max(width * FWIDTH, bwidth)
         this.height = height * FHEIGHT
 
+    lines = ->
+        lines = this._lines.size
+        if lines == 1 and this._lines[1].size == 0: return 0
+        return lines
+
     text = ->
         this.clearLeftRight
         this._lines.join("\n")
@@ -301,6 +306,8 @@ Editor = text, readonly -> _Mutable_new {
         this._lines = Array.new(text.split("\n",keepempty=true))
         this._y = 1
         this._x = 1
+        this._sx = null
+        this._sy = null
         this._left = null
 
     clearaftercaret = ->
@@ -316,11 +323,11 @@ Editor = text, readonly -> _Mutable_new {
     clear = ->
         this.setText("")
 
-
     draw = g, width, height ->
         g.setFont(FONT, FSIZE)
 
-        g.color(1,1,1).rectangle(0, 0, width, height).fill
+        if not this.readonly:
+            g.color(1,1,1).rectangle(0, 0, width, height).fill
         if this.error:
             g.color(1,0.9,0.9).rectangle(0, this.error * FHEIGHT - FHEIGHT, width, FHEIGHT).fill
         if this._sx:
