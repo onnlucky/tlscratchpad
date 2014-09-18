@@ -3,11 +3,11 @@
 _env = Env.current
 
 w = Window.new 400, 800
+w.title "tl scratchpad - $(repr(system))"
 b = Box.new 0, 0, w.width, w.height
 w.add(b)
 w.onresize(width, height -> b.width(width); b.height(height))
 !(sleep 0.1; w.focus)
-w.title "tl scratchpad - $(repr(system))"
 
 app = widget.App(w, b)
 view = widget.Vertical()
@@ -57,7 +57,8 @@ runchange = ->
     editor.setErrorLine(null)
     output.setErrorLine(null)
     output.clear
-    res = code.eval(_env)
+    task = Task.new(100000).run(->code.eval(_env))
+    res = task.value
     if res != null:
         r = repr(res)
         { r == "null"   }: output.addLines("$res".split("\n"))
