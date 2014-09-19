@@ -4,7 +4,7 @@ FHEIGHT = 17
 FWIDTH = 8
 FSIZE = 14
 
-Editor = text, readonly -> _Mutable_new {
+Editor = text, readonly, singleline -> _Mutable_new {
     // to be a "widget"
     class = widget.widget_class
     parent = null
@@ -17,10 +17,12 @@ Editor = text, readonly -> _Mutable_new {
     // editor
     error = null
     errormsg = null
+
+    singleline = singleline or false
     readonly = readonly or false
     cursor = not readonly
 
-    _lines = Array.new((text or "").split("\n",keepempty=true))
+    _lines = Array.new((text or "").split("\n"))
     _markup = Array.new()
 
     _offset = 0
@@ -54,12 +56,14 @@ Editor = text, readonly -> _Mutable_new {
         this._left = this._right = null
 
     addLine = line ->
+        if this.singleline: return
         if this._lines[-1] == "":
             this._lines[-1] = line
             return
         this._lines.add(line)
 
     addLines = lines ->
+        if this.singleline: return
         if this._lines[-1] == "":
             this._lines.remove(-1)
         lines.each: l -> this._lines.add(l)
@@ -71,9 +75,11 @@ Editor = text, readonly -> _Mutable_new {
 
     // EDITING
     // TODO allow input to take "\n" and make lines from that
-    input = (s ->
+    input = s ->
         assert this._x > 0
         assert this._y > 0
+        s = { this.singleline }: s.split("\n")[1]
+            {                 }: s
 
         { this._sx }:
             this.replaceselection(s)
@@ -81,7 +87,7 @@ Editor = text, readonly -> _Mutable_new {
             return
         { s.find("\n") }:
             this.ensureLeftRight
-            s = (this._left + s + this._right).split("\n", keepempty=true)
+            s = (this._left + s + this._right).split("\n")
             this._lines.remove(this._y)
             s.each: l, n -> this._lines.insert(this._y + n - 1, l)
             this._y = this._y + s.size - 1
@@ -104,9 +110,9 @@ Editor = text, readonly -> _Mutable_new {
         { s == "'" and this._right[1:1] == "'" }: this._right = this._right[2:]
         { s == "'"                             }: this._right = "'"+ this._right
         {                                      }: null
-    )
 
-    newline = (->
+    newline = ->
+        if this.singleline: return
         if this._sx: this.replaceselection(""); return
 
         this.ensureLeftRight
@@ -122,8 +128,8 @@ Editor = text, readonly -> _Mutable_new {
         this._left = up[:$indent - 1]
         this._x = $indent
         this.debug "line: $(this._y) offset: $(this._offset)"
-    )
-    deleteleft = (->
+
+    deleteleft = ->
         if this._sx: this.replaceselection(""); return
         this.ensureLeftRight
         if this._x <= 1:
@@ -138,8 +144,8 @@ Editor = text, readonly -> _Mutable_new {
 
         this._x -= 1
         this._left = this._left[:-2]
-    )
-    deleteright = (->
+
+    deleteright = ->
         if this._sx: this.replaceselection(""); return
         this.ensureLeftRight
         line = this.currentline
@@ -151,7 +157,6 @@ Editor = text, readonly -> _Mutable_new {
             return
 
         this._right = this._right[2:]
-    )
 
     // SELECTION
     selection = ->
@@ -169,6 +174,8 @@ Editor = text, readonly -> _Mutable_new {
         {                     }: this._sx = null; this.sy = null
 
     replaceselection = text ->
+        text = { this.singleline }: text.split("\n")[1]
+               {                 }: text
         this.clearLeftRight
         bx, by, ex, ey = this.selection
         if not bx: return
@@ -177,7 +184,7 @@ Editor = text, readonly -> _Mutable_new {
         (ey - by).times: this._lines.remove(by)
         this._sx = null; this._sy = null
         { text.find("\n") }:
-            s = (bline[:bx - 1] + text + eline[ex + 1:]).split("\n", keepempty=true)
+            s = (bline[:bx - 1] + text + eline[ex + 1:]).split("\n")
             this._lines.remove(by)
             s.each: l, n -> this._lines.insert(by + n - 1, l)
             this._y = by + s.size - 1
@@ -303,7 +310,9 @@ Editor = text, readonly -> _Mutable_new {
         this._lines.join("\n")
 
     setText = text ->
-        this._lines = Array.new(text.split("\n",keepempty=true))
+        ls = { this.singleline }: [text.split("\n")[1]]
+             {                 }: text.split("\n")
+        this._lines = Array.new(ls)
         this._y = 1
         this._x = 1
         this._sx = null
@@ -414,6 +423,7 @@ Editor = text, readonly -> _Mutable_new {
         { ctrl and c == 'Z' }: this.undo
         { ctrl and c == 37  }: this.movelinestart(shift); $change = false
         { ctrl and c == 39  }: this.movelineend(shift); $change = false
+        { c ==  13 and this.singleline }: $change = false; if (this.onsubmit): this.onsubmit()
         { c ==  13 }: this.newline
         { c ==   8 }: this.deleteleft
         { c ==   9 }: this.input("  ")
@@ -432,6 +442,7 @@ Editor = text, readonly -> _Mutable_new {
         if $change and this.onchange: this.onchange()
 
     onchange = null
+    onsubmit = null
 
     setErrorLine = line, msg ->
         this.error = line

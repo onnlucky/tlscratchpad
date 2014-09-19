@@ -32,21 +32,51 @@ b.ondraw(g ->
 )
 
 view.add(widget.Space(10))
-editor = Editor("print \"hello world!\"")
-view.add(editor)
+editor = view.add(Editor("print \"hello world!\""))
 editor.setFocus
-view.add(widget.Space(10))
-output = Editor("", readonly=true)
-view.add(output)
+view.add(widget.Space(5))
+control = view.add(RunControl())
+view.add(widget.Space(5))
+output = view.add(Editor("", readonly=true))
+input = view.add(Editor("", singleline=true))
+input.setVisible(false)
+
+internal_read = ->
+    if control.autorun: Error("autorunning").throw
+    if control.task != Task.current: Error("task outdated").throw
+
+    q = Queue.new
+    input.onsubmit = ->
+        input.setVisible(false)
+        q.add input.text
+    !(
+        input.clear
+        input.setVisible(true)
+        input.setFocus
+        //input.flash
+    )
+    return q.get
 
 internal_print = ->
+    if control.task != Task.current: return
     output.addLines(args.join(" ").split("\n"))
+    b.redraw
     return
-_env = Env.new(_env.set("print", internal_print))
+_env = Env.new(_env.set("print", internal_print).set("read", internal_read))
+
 
 reline = Regex("(line|at:) ([0-9]+)")
-runchange = ->
+stop = ->
+    task = control.task
+    control.task = null
+    input.setVisible(false)
+    if task: task.abort()
+
+start = ->
+    task = Task.new(bool(control.autorun, 2000, null))
     catch: e ->
+        if control.task != task: return
+        control.task = null
         msg = try(e.msg, e) or "unknown"
         line = try(Number(reline.match(msg)[2]))
         editor.setErrorLine(line, msg)
@@ -57,22 +87,30 @@ runchange = ->
     editor.setErrorLine(null)
     output.setErrorLine(null)
     output.clear
-    task = Task.new(100000).run(->code.eval(_env))
+    control.task = task
+    task.run(->code.eval(_env))
     res = task.value
+    if control.task != task: return
+    control.task = null
     if res != null:
         r = repr(res)
         { r == "null"   }: output.addLines("$res".split("\n"))
         {               }: output.addLine(r)
     b.redraw
 
+control.onstop = -> stop()
+control.onstart = -> stop(); !start()
+
 dochange = Var.new 0
 editor.onchange = ->
+    if not control.autorun: return
     $dochange += 1
     !(
-        sleep 0.2
+        sleep 0.15
         x = ($dochange -= 1)
         if x > 0: return
-        runchange()
+        stop()
+        start()
     )
-runchange()
+start()
 

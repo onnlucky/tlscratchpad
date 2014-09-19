@@ -36,7 +36,7 @@ App = window, box -> _Mutable_new {
 widget_class = {
     app = -> this.parent.app
     focus = -> try(this.app._focus) == this
-    setFocus = -> this.app.setFocus(this)
+    setFocus = -> !this.app.setFocus(this)
     setVisible = visible -> this.visible = visible; !try(this.parent.dirty)
     size = g, width -> null
     draw = g, width, height -> null
