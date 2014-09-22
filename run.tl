@@ -31,7 +31,9 @@ b.ondraw(g ->
 
 example = {
     title = "Example"
-    text = "Create a function that receives a string, and returns the same string, but in all upper case letters."
+    text = "Create a function that receives a string,
+            and returns the same string, but in all
+            upper case letters."
     hints = [
         "Strings have a method called 'upper'."
         "Read the function out loud: 'uppercase' is (=) a function (->) that takes an 's' and ..."
@@ -48,15 +50,15 @@ assignment = { args[1] }: io.File(args[1]).readString.eval
 
 view.add(widget.Space(10))
 view.add(widget.Text(assignment.title,style="bold"))
-view.add(widget.Text(assignment.text))
+view.add(widget.Text(assignment.text.split("\n", trim=true,keepempty=false).join(" ")))
 view.add(widget.Space(10))
 editor = Editor(assignment.template)
 view.add(editor)
 editor.setFocus
 view.add(widget.Space(10))
 canvas = Canvas()
-view.add(canvas)
-view.add(widget.Space(10))
+//view.add(canvas)
+//view.add(widget.Space(10))
 view.add(widget.Text("Make these tests green by implementing your function:"))
 view.add(widget.Space(5))
 
