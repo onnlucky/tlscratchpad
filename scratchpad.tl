@@ -1,6 +1,7 @@
 #!/usr/bin/env gtl
 
 _env = Env.current
+BYTECODE=false
 
 w = Window.new 400, 800
 w.title "tl scratchpad - $(repr(system))"
@@ -88,7 +89,11 @@ start = ->
     output.setErrorLine(null)
     output.clear
     control.task = task
-    task.run(->code.eval(_env))
+    { BYTECODE }:
+        mod = compiler.load(code, _env)
+        mod.run([], task)
+    {          }:
+        task.run(->code.eval(_env))
     res = task.value
     if control.task != task: return
     control.task = null
